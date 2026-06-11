@@ -1,0 +1,18 @@
+# Environment variables (contains API keys and secrets)
+.env
+
+# Python caching
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+venv/
+.venv/
+env/
+ENV/
+target/
+
+# IDE settings
+.vscode/
+.idea/
