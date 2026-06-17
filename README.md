@@ -138,3 +138,60 @@ Testing the core `search_web()` function interactively in the terminal:
 <!-- slide -->
 ![Interactive Test Part 3](assets/Test_answer3.png)
 ````
+
+---
+
+## How It Works
+
+This project implements a Retrieval-Augmented Generation (RAG) pipeline designed for low-latency, fact-accurate, and context-rich responses. The core workflow combines **intelligent query routing**, **live web search retrieval**, and **high-speed LLM generation**.
+
+Below is a step-by-step breakdown of how the pipeline processes a user query:
+
+### 1. Initialization & Configuration
+When the script starts, it loads configuration and credentials from the local `.env` file via `python-dotenv`. It then initializes two core clients:
+* **Cerebras LLM Engine (`ChatCerebras`)**: Interfaces with Cerebras Cloud's high-speed inference engine using the `gpt-oss-120b` model.
+* **Tavily Search Client (`TavilyClient`)**: Connects to the search engine optimized specifically for AI agent retrieval to gather real-time web results.
+
+### 2. Intelligent Query Routing (Classification)
+To reduce latency, control API usage, and optimize performance, the system does not search the web for every question. Instead, it uses a classifier LLM step:
+* The user's question is passed to a classification prompt.
+* The model categorizes the query into one of two routes:
+  * `web_search`: For current events, live statistics, recent news, or any time-sensitive query.
+  * `direct_answer`: For static knowledge, general concepts, definitions, or well-established facts.
+
+### 3. Processing Paths
+
+```mermaid
+flowchart TD
+    Start[User Inputs Question] --> Route{Query Router}
+    Route -->|web_search| Search[Tavily Search API]
+    Route -->|direct_answer| Direct[LLM Direct Path]
+    
+    Search --> Format[Context Formatting & [Source N] Mapping]
+    Format --> Prompt[RAG Prompt Assembly]
+    Prompt --> GenRAG[Cerebras LLM Generation]
+    
+    Direct --> GenDirect[Cerebras LLM Generation]
+    
+    GenRAG --> Output[Citations and Final Answer]
+    GenDirect --> Output
+```
+
+#### Route A: Direct Answer (Static/General Knowledge)
+1. If the router returns `direct_answer`, the search API call is skipped entirely.
+2. The question is formatted using the `direct_prompt` template.
+3. The LLM generates a response instantly based on its built-in knowledge base.
+
+#### Route B: RAG with Live Web Search (Dynamic/Time-sensitive Knowledge)
+1. **Retrieval**: If routed to `web_search`, the system queries the Tavily Search API, fetching the top 5 web results.
+2. **Context Formatting**: The pipeline parses each result into structured context containing:
+   * **Source Citation ID** (e.g., `[Source 1]`)
+   * **Webpage Title**
+   * **Webpage URL**
+   * **Content Snippet**
+3. **Prompt Augmentation**: The system inserts the formatted search results and the user's question into the `rag_prompt` template.
+4. **Context-Grounded Generation**: The LLM synthesizes an answer using *only* the retrieved context and applies inline citations (e.g., `[Source N]`) corresponding to the web sources used.
+
+### 4. Output Generation & Parsing
+Both execution paths chain their prompt templates and LLM outputs to a LangChain `StrOutputParser` using the LangChain Expression Language (LCEL) pipe operator (`|`). This returns a clean string response to the terminal, complete with URLs and clickable sources when the web search route is activated.
+
