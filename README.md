@@ -32,6 +32,23 @@ graph TD
 
 ---
 
+## How It Works
+
+This project implements an intelligent Retrieval-Augmented Generation (RAG) agent that selectively queries the live web based on the intent of your question. Under the hood, the pipeline follows these steps:
+
+1. **Intelligent Query Classification**: 
+   When you input a question, the agent sends it to [classify_question](file:///c:/Users/Lenovo/Desktop/rag-pipeline/rag_pipeline.py#L39). The Cerebras LLM evaluates the prompt to determine whether it is time-sensitive (such as live events, current prices, news) or general knowledge.
+2. **Dynamic Routing**:
+   * **`web_search` Route**: If the question requires fresh data, the pipeline triggers [search_web](file:///c:/Users/Lenovo/Desktop/rag-pipeline/rag_pipeline.py#L22) to query the internet using the Tavily Search API. It retrieves and formats the top 5 relevant web sources (including URLs and content snippets).
+   * **`direct_answer` Route**: If the question is about general concepts or static facts, the pipeline bypasses the web search entirely to save search API credits and reduce latency.
+3. **Response Generation**:
+   * For the web search route, the [rag_chain](file:///c:/Users/Lenovo/Desktop/rag-pipeline/rag_pipeline.py#L87) combines the user query with the retrieved context and prompts the LLM to generate an answer with inline source citations (`[Source N]`).
+   * For the direct route, the [direct_chain](file:///c:/Users/Lenovo/Desktop/rag-pipeline/rag_pipeline.py#L88) prompts the LLM to respond directly from its internal pre-trained weights.
+4. **Output Parsing**:
+   The response is structured and streamed to the command-line interface via LangChain's `StrOutputParser`.
+
+---
+
 ## Setup Instructions
 
 ### 1. Prerequisites
