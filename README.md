@@ -4,6 +4,14 @@ An intelligent Retrieval-Augmented Generation (RAG) pipeline built using Python,
 
 ---
 
+## Prerequisites
+
+- Python 3.10+
+- [Cerebras AI Account](https://cloud.cerebras.ai/)
+- [Tavily API Key](https://tavily.com/)
+
+---
+
 ## Features
 
 - **Fast Inference**: Powered by the Cerebras LLM engine (`gpt-oss-120b`) for rapid responses.
