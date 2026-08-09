@@ -1,4 +1,4 @@
-# 🚀 Real-Time RAG Pipeline with Live Web Search & Memory
+# Real-Time RAG Pipeline with Live Web Search & Memory
 
 ![Python](https://img.shields.io/badge/Python-3.9+-blue.svg)
 ![LangChain](https://img.shields.io/badge/LangChain-1.4+-green.svg)
@@ -7,24 +7,24 @@
 
 An intelligent, low-latency **Retrieval-Augmented Generation (RAG)** pipeline built using Python, LangChain, Tavily Search API, and the Cerebras Inference Engine. 
 
-This project features **dynamic query routing** to decide whether a user's prompt can be answered using general knowledge or requires real-time web search for fresh, time-sensitive data, now enhanced with **Conversational Memory** for seamless multi-turn interactions.
+This project features **dynamic query routing** to decide whether a user's prompt can be answered using general knowledge or requires real-time web search for fresh, time-sensitive data, enhanced with **Conversational Memory** for seamless multi-turn interactions.
 
 ---
 
-## ✨ Key Features
+## Key Features
 
-- ⚡ **Fast Inference**: Powered by the Cerebras LLM engine (`gpt-oss-120b`) for rapid responses.
-- 🧠 **Conversational Memory**: Maintains context of the last 5 conversation turns, allowing for natural follow-up questions.
-- 🔀 **Intelligent Query Routing**: Classifies queries automatically to avoid redundant search API calls.
+- **Fast Inference**: Powered by the Cerebras LLM engine (`gpt-oss-120b`) for rapid responses.
+- **Conversational Memory**: Maintains context of recent conversation turns, allowing for natural follow-up questions.
+- **Intelligent Query Routing**: Classifies queries automatically to avoid redundant search API calls.
   - **Direct Path**: For general concepts, definitions, and static knowledge.
   - **RAG Path**: For breaking news, recent events, stock/crypto prices, or time-sensitive topics.
-- 🌐 **Live Web Search Integration**: Searches and compiles web context via Tavily Search API.
-- 📑 **Smart Citations**: Output automatically includes citation markers (e.g., `[Source 1]`) pointing to relevant URL references.
-- 🔒 **Environment Isolation**: Uses `python-dotenv` to keep API credentials secure and separated from the codebase.
+- **Live Web Search Integration**: Searches and compiles web context via Tavily Search API.
+- **Smart Citations**: Output automatically includes citation markers (e.g., `[Source 1]`) pointing to relevant URL references.
+- **Environment Isolation**: Uses `python-dotenv` to keep API credentials secure and separated from the codebase.
 
 ---
 
-## 🏗️ Architecture Flow
+## Architecture Flow
 
 ```mermaid
 graph TD
@@ -41,7 +41,7 @@ graph TD
 
 ---
 
-## 🛠️ Setup Instructions
+## Setup Instructions
 
 ### 1. Prerequisites
 - **Python 3.9+**
@@ -72,7 +72,7 @@ This project uses environment variables to manage credentials safely.
 
 ---
 
-## 🚀 Running the Pipeline
+## Running the Pipeline
 
 Start the interactive session directly from your terminal:
 
@@ -80,7 +80,7 @@ Start the interactive session directly from your terminal:
 python rag_pipeline.py
 ```
 
-### 💡 Example Usage
+### Example Usage
 
 ```text
 ============================================================
@@ -105,7 +105,7 @@ Answer:
 Max Verstappen won the latest Formula 1 race [Source 1] ahead of Lando Norris [Source 2]...
 ```
 
-### 🔬 Testing Modules Interactively
+### Testing Modules Interactively
 
 To import and test components (such as the web search module) individually, run Python in interactive mode:
 
@@ -120,15 +120,15 @@ Then invoke functions directly inside the interactive session:
 
 ---
 
-## ⚙️ How It Works (Under the Hood)
+## System Details
 
 This project implements a low-latency, context-rich RAG pipeline. Below is a step-by-step breakdown:
 
 1. **Initialization**: Connects to the **Cerebras LLM Engine** (using `gpt-oss-120b`) and **Tavily Search Client**.
-2. **Context Management**: Gathers the last 5 turns of `chat_history` to understand contextual or follow-up questions.
+2. **Context Management**: Gathers recent turns of `chat_history` to understand contextual or follow-up questions.
 3. **Query Classification**: The agent sends the question and history to a classifier prompt. The LLM determines if it's time-sensitive (`web_search`) or general knowledge (`direct_answer`).
 4. **Dynamic Routing**:
-   * **`web_search`**: Triggers Tavily to fetch the top 5 relevant web sources. Parses titles, URLs, and snippets into formatted context.
+   * **`web_search`**: Triggers Tavily to fetch relevant web sources. Parses titles, URLs, and snippets into formatted context.
    * **`direct_answer`**: Bypasses search entirely to save API credits and reduce latency.
 5. **Response Generation**: 
    * The RAG chain prompts the LLM to generate an answer *only* from the retrieved context, applying inline citations.
@@ -137,7 +137,7 @@ This project implements a low-latency, context-rich RAG pipeline. Below is a ste
 
 ---
 
-## 📸 Screenshots
+## Screenshots
 
 #### 1. Dynamic Routing & Web Search
 ![Routing Demo](assets/routing_demo.png)
@@ -147,3 +147,4 @@ This project implements a low-latency, context-rich RAG pipeline. Below is a ste
 
 #### 3. Direct Answers (General Knowledge)
 ![Direct Answer Demo](assets/direct_answer_demo.png)
+
