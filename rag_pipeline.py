@@ -22,9 +22,12 @@ tavily_client = TavilyClient(api_key=os.getenv("TAVILY_API_KEY"))
 
 def search_web(query: str) -> str:
     """Search the web using Tavily and format results as context."""
-    response = tavily_client.search(query=query, max_results=5)
+    try:
+        response = tavily_client.search(query=query, max_results=5)
+    except Exception as e:
+        return f"Error performing web search: {e}"
 
-    if not response["results"]:
+    if not response.get("results"):
         return "No search results found."
 
     context_parts = []
