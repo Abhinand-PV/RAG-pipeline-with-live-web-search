@@ -20,6 +20,7 @@ This project features **dynamic query routing** to decide whether a user's promp
   - **RAG Path**: For breaking news, recent events, stock/crypto prices, or time-sensitive topics.
 - **Live Web Search Integration**: Searches and compiles web context via Tavily Search API.
 - **Smart Citations**: Output automatically includes citation markers (e.g., `[Source 1]`) pointing to relevant URL references.
+- **Robust Error Handling**: Handles API and network exceptions gracefully without interrupting the CLI session.
 - **Environment Isolation**: Uses `python-dotenv` to keep API credentials secure and separated from the codebase.
 
 ---
