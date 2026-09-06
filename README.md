@@ -20,7 +20,7 @@ This project features **dynamic query routing** to decide whether a user's promp
   - **RAG Path**: For breaking news, recent events, stock/crypto prices, or time-sensitive topics.
 - **Live Web Search Integration**: Searches and compiles web context via Tavily Search API.
 - **Smart Citations**: Output automatically includes citation markers (e.g., `[Source 1]`) pointing to relevant URL references.
-- **Robust Error Handling**: Handles API and network exceptions gracefully without interrupting the CLI session.
+- **Robust Error Handling**: Handles API and network exceptions gracefully without interrupting the CLI session. Missing or placeholder API keys are caught at startup with a clear setup message.
 - **Environment Isolation**: Uses `python-dotenv` to keep API credentials secure and separated from the codebase.
 
 ---
@@ -53,15 +53,15 @@ graph TD
 ### 2. Installation
 Clone or download the project files, navigate to the directory, and install the dependencies:
 ```bash
-git clone <your-repo-url>
-cd rag-pipeline
+git clone https://github.com/Abhinand-PV/RAG-pipeline-with-live-web-search.git
+cd RAG-pipeline-with-live-web-search
 pip install -r requirements.txt
 ```
 
 ### 3. Configuration
 This project uses environment variables to manage credentials safely. 
 
-1. Create a local `.env` file (you can copy `.env.example` if available):
+1. Create a local `.env` file from the example template:
    ```bash
    cp .env.example .env
    ```
@@ -87,7 +87,7 @@ python rag_pipeline.py
 ============================================================
 Real-Time RAG Pipeline with Query Routing (with Conversational Memory)
 Ask any question and get a cited answer from the live web!
-Type 'quit' to exit.
+Type 'quit' to exit, or 'clear' to reset conversation memory.
 ============================================================
 
 Your question: What is machine learning?
@@ -131,10 +131,11 @@ This project implements a low-latency, context-rich RAG pipeline. Below is a ste
 4. **Dynamic Routing**:
    * **`web_search`**: Triggers Tavily to fetch relevant web sources. Parses titles, URLs, and snippets into formatted context.
    * **`direct_answer`**: Bypasses search entirely to save API credits and reduce latency.
-5. **Response Generation**: 
-   * The RAG chain prompts the LLM to generate an answer *only* from the retrieved context, applying inline citations.
-   * The Direct chain uses local pre-trained weights for general queries.
-6. **Output Parsing**: Chained via LangChain Expression Language (LCEL), the system streams a clean string back to the user interface.
+5. **Follow-up Search Queries**: If the classifier chooses web search and the user asked a follow-up (e.g. "who won the latest one?"), the pipeline rewrites it into a standalone search query using chat history.
+6. **Response Generation**:
+   * The RAG chain prompts the Cerebras LLM to generate an answer from the retrieved context, applying inline citations.
+   * The Direct chain asks the same hosted model using general knowledge, skipping Tavily.
+7. **Output Parsing**: Chained via LangChain Expression Language (LCEL), the system streams a clean string back to the user interface.
 
 ---
 

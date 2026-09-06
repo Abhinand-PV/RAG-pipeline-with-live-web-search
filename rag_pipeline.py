@@ -8,6 +8,19 @@ from langchain_core.messages import HumanMessage, AIMessage
 
 # Loading the environment variables
 load_dotenv()
+
+
+def require_env(name: str) -> str:
+    """Return a required environment variable or raise a clear error."""
+    value = (os.getenv(name) or "").strip()
+    if not value or value.startswith("your_"):
+        raise RuntimeError(
+            f"Missing or placeholder value for {name}. "
+            "Copy .env.example to .env and set your API keys."
+        )
+    return value
+
+
 # Initializing Cerebras LLM via LangChain
 llm = ChatCerebras(
     model="gpt-oss-120b",
@@ -27,18 +40,23 @@ def search_web(query: str) -> str:
     except Exception as e:
         return f"Error performing web search: {e}"
 
-    if not response.get("results"):
+    results = response.get("results") or []
+    if not results:
         return "No search results found."
 
     context_parts = []
-    for i, result in enumerate(response["results"], 1):
+    for i, result in enumerate(results, 1):
+        title = result.get("title") or "Untitled"
+        url = result.get("url") or "N/A"
+        content = result.get("content") or "No snippet available."
         context_parts.append(
-            f"[Source {i}] {result['title']}\n"
-            f"URL: {result['url']}\n"
-            f"Content: {result['content']}\n"
+            f"[Source {i}] {title}\n"
+            f"URL: {url}\n"
+            f"Content: {content}\n"
         )
 
     return "\n".join(context_parts)
+
 
 def classify_question(question: str, chat_history: list) -> str:
     """Classify whether a question needs web search or can be answered directly."""
@@ -55,16 +73,39 @@ def classify_question(question: str, chat_history: list) -> str:
         MessagesPlaceholder(variable_name="chat_history"),
         ("human", "Question: {question}"),
     ])
-    
+
     classify_chain = classify_prompt | llm | StrOutputParser()
     result = classify_chain.invoke({
         "question": question,
         "chat_history": chat_history
     }).strip().lower()
-    
+
     if "web_search" in result:
         return "web_search"
     return "direct_answer"
+
+
+def rewrite_search_query(question: str, chat_history: list) -> str:
+    """Turn follow-up questions into a standalone web search query."""
+    if not chat_history:
+        return question
+
+    rewrite_prompt = ChatPromptTemplate.from_messages([
+        ("system", (
+            "Rewrite the user's latest question as a standalone web search query. "
+            "Resolve pronouns and references using chat history. "
+            "Return only the search query, with no quotes or extra text."
+        )),
+        MessagesPlaceholder(variable_name="chat_history"),
+        ("human", "{question}"),
+    ])
+    rewrite_chain = rewrite_prompt | llm | StrOutputParser()
+    rewritten = rewrite_chain.invoke({
+        "question": question,
+        "chat_history": chat_history,
+    }).strip()
+    return rewritten or question
+
 # Defining the RAG prompt template
 rag_prompt = ChatPromptTemplate.from_messages([
     ("system", (
@@ -79,7 +120,7 @@ rag_prompt = ChatPromptTemplate.from_messages([
         "Question: {question}\n\n"
         "Provide a comprehensive answer with citations:"
     )),
-]) 
+])
 
 # Define the direct answer prompt
 direct_prompt = ChatPromptTemplate.from_messages([
@@ -101,11 +142,12 @@ def ask(question: str, chat_history: list) -> str:
     """Run the RAG pipeline with intelligent query routing and history."""
     route = classify_question(question, chat_history)
     print(f"\nRoute: {route}")
-    
+
     if route == "web_search":
-        print(f"Searching the web for: {question}")
-        context = search_web(question)
-        
+        search_query = rewrite_search_query(question, chat_history)
+        print(f"Searching the web for: {search_query}")
+        context = search_web(search_query)
+
         print("Generating answer...\n")
         answer = rag_chain.invoke({
             "context": context,
@@ -118,25 +160,41 @@ def ask(question: str, chat_history: list) -> str:
             "question": question,
             "chat_history": chat_history,
         })
-    
+
     return answer
 
 def main():
     """Interactive loop for asking questions."""
+    try:
+        require_env("CEREBRAS_API_KEY")
+        require_env("TAVILY_API_KEY")
+    except RuntimeError as e:
+        print(f"\n{e}")
+        return
+
     print("=" * 60)
     print("Real-Time RAG Pipeline with Query Routing (with Conversational Memory)")
     print("Ask any question and get a cited answer from the live web!")
-    print("Type 'quit' to exit.")
+    print("Type 'quit' to exit, or 'clear' to reset conversation memory.")
     print("=" * 60)
 
     chat_history = []
 
     while True:
-        question = input("\nYour question: ").strip()
+        try:
+            question = input("\nYour question: ").strip()
+        except (KeyboardInterrupt, EOFError):
+            print("\nGoodbye!")
+            break
 
         if question.lower() in ("quit", "exit", "q"):
             print("Goodbye!")
             break
+
+        if question.lower() == "clear":
+            chat_history = []
+            print("Conversation memory cleared.")
+            continue
 
         if not question:
             print("Please enter a question.")
@@ -145,7 +203,7 @@ def main():
         try:
             answer = ask(question, chat_history)
             print(f"\nAnswer:\n{answer}")
-            
+
             # Maintain sliding window of conversation history (keep last 5 turns / 10 messages)
             chat_history.append(HumanMessage(content=question))
             chat_history.append(AIMessage(content=answer))
